@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Application Tracker</title>
+<style>
+  :root { --bg:#f5f6fa; --card:#fff; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --accent:#2563eb; --bad:#dc2626; --warn:#d97706; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:14px system-ui,sans-serif; background:var(--bg); color:var(--text); }
+  header { background:var(--card); border-bottom:1px solid var(--line); padding:12px 20px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  header h1 { font-size:18px; margin:0 auto 0 0; }
+  main { padding:20px; max-width:1200px; margin:auto; }
+  button, input, select, textarea { font:inherit; }
+  button { padding:6px 12px; border:1px solid var(--line); background:var(--card); border-radius:6px; cursor:pointer; }
+  button:hover { border-color:var(--accent); }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button.danger { color:var(--bad); }
+  input, select, textarea { padding:6px 8px; border:1px solid var(--line); border-radius:6px; width:100%; background:#fff; }
+  nav { display:flex; gap:6px; margin-bottom:16px; }
+  nav button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .toolbar { display:flex; gap:10px; margin-bottom:12px; }
+  .toolbar input { max-width:300px; } .toolbar select { max-width:180px; }
+  table { width:100%; border-collapse:collapse; background:var(--card); border-radius:8px; overflow:hidden; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { cursor:pointer; background:#f9fafb; user-select:none; }
+  .badge { padding:2px 8px; border-radius:10px; font-size:12px; background:#e0e7ff; }
+  .overdue { color:var(--bad); font-weight:600; } .soon { color:var(--warn); font-weight:600; }
+  .board { display:grid; grid-template-columns:repeat(5,minmax(180px,1fr)); gap:12px; overflow-x:auto; }
+  .col { background:#eceef3; border-radius:8px; padding:8px; min-height:200px; }
+  .col.over { outline:2px dashed var(--accent); }
+  .col h3 { margin:4px 4px 8px; font-size:13px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:6px; padding:8px; margin-bottom:8px; cursor:grab; }
+  .card small { color:var(--muted); display:block; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:20px; }
+  .stat { background:var(--card); border-radius:8px; padding:14px; border:1px solid var(--line); }
+  .stat b { font-size:24px; display:block; }
+  .bar { height:14px; background:var(--accent); border-radius:4px; }
+  .panel { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px; margin-bottom:16px; }
+  dialog { border:none; border-radius:10px; padding:20px; width:min(480px,95vw); }
+  dialog::backdrop { background:rgba(0,0,0,.4); }
+  label { display:block; margin-top:10px; color:var(--muted); font-size:12px; }
+  .row { display:flex; gap:10px; } .row > * { flex:1; }
+  .actions { display:flex; gap:8px; margin-top:16px; justify-content:flex-end; }
+  .hidden { display:none; }
+  #fileState { color:var(--muted); font-size:12px; }
+  body { background:linear-gradient(135deg,#eef2ff,#fdf2f8 50%,#ecfeff); min-height:100vh; }
+  header { background:linear-gradient(90deg,#4f46e5,#7c3aed,#db2777); color:#fff; border:0; box-shadow:0 4px 14px rgba(79,70,229,.35); }
+  header button { background:rgba(255,255,255,.15); color:#fff; border-color:rgba(255,255,255,.45); }
+  header button:hover { background:rgba(255,255,255,.3); }
+  header button.primary { background:#fff; color:#4f46e5; font-weight:600; }
+  button { transition:transform .12s, box-shadow .12s; }
+  button:hover { transform:translateY(-1px); box-shadow:0 3px 8px rgba(0,0,0,.12); }
+  nav button { background:#fff; font-weight:600; }
+  nav button.active { background:linear-gradient(90deg,#4f46e5,#7c3aed); box-shadow:0 3px 10px rgba(79,70,229,.4); }
+  .s-Wishlist { --c:#8b5cf6; } .s-Applied { --c:#2563eb; } .s-Interview { --c:#f59e0b; } .s-Offer { --c:#16a34a; } .s-Rejected { --c:#dc2626; }
+  .badge { background:color-mix(in srgb, var(--c) 15%, white); color:var(--c); border:1px solid var(--c); font-weight:600; }
+  .col { background:color-mix(in srgb, var(--c) 10%, white); border-top:4px solid var(--c); }
+  .col h3 { color:var(--c); }
+  .card { border-left:4px solid var(--c); transition:transform .12s, box-shadow .12s; }
+  .card:hover { transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.15); }
+  .stat { color:#fff; border:0; box-shadow:0 6px 16px rgba(0,0,0,.15); transition:transform .15s; }
+  .stat:hover { transform:translateY(-3px); }
+  .st0 { background:linear-gradient(135deg,#6366f1,#4338ca); } .st1 { background:linear-gradient(135deg,#0ea5e9,#2563eb); }
+  .st2 { background:linear-gradient(135deg,#fbbf24,#d97706); } .st3 { background:linear-gradient(135deg,#34d399,#15803d); }
+  .st4 { background:linear-gradient(135deg,#f87171,#b91c1c); }
+  .panel { border:0; box-shadow:0 4px 14px rgba(0,0,0,.08); }
+  .bar { background:var(--c); transition:width .4s; }
+  table { box-shadow:0 4px 14px rgba(0,0,0,.08); }
+  th { background:linear-gradient(90deg,#e0e7ff,#fce7f3); color:#3730a3; }
+  tbody tr:hover { background:#f5f3ff; }
+  .clip { max-width:260px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .switch-row { display:flex; justify-content:space-between; align-items:center; color:var(--text); font-size:14px; cursor:pointer; }
+  .switch { position:relative; width:42px; height:24px; flex:none; }
+  .switch input { display:none; }
+  .slider { position:absolute; inset:0; background:#cbd5e1; border-radius:12px; transition:background .2s; }
+  .slider::before { content:""; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform .2s; box-shadow:0 1px 3px rgba(0,0,0,.3); }
+  .switch input:checked + .slider { background:#0d9488; }
+  .switch input:checked + .slider::before { transform:translateX(18px); }
+  #saveBar { padding:10px 14px; border-radius:8px; margin-bottom:16px; font-weight:500; display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  #saveBar.ok { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+  #saveBar.warn { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Job Application Tracker</h1>
+  <button id="exportBtn">Download .xlsx</button>
+  <button id="importBtn">Import</button>
+  <input type="file" id="importFile" accept=".xlsx,.csv" class="hidden">
+  <button class="primary" id="addBtn">+ Add application</button>
+</header>
+<main>
+  <nav>
+    <button data-view="dashboard" class="active">Dashboard</button>
+    <button data-view="table">Table</button>
+    <button data-view="board">Board</button>
+    <button data-view="portals">Portals</button>
+  </nav>
+
+  <div id="saveBar"></div>
+
+  <section id="dashboard">
+    <div class="stats" id="stats"></div>
+    <div class="panel"><h3 style="margin-top:0">Follow-ups</h3><div id="reminders"></div></div>
+    <div class="panel"><h3 style="margin-top:0">By status</h3><div id="chart"></div></div>
+  </section>
+
+  <section id="table" class="hidden">
+    <div class="toolbar">
+      <input id="search" placeholder="Search company, role, notes...">
+      <select id="statusFilter"></select>
+      <select id="referralFilter">
+        <option value="">All jobs</option>
+        <option value="yes">Referral jobs only</option>
+        <option value="no">Non-referral jobs</option>
+      </select>
+      <button class="danger" id="clearRejected" style="margin-left:auto;white-space:nowrap">Remove all rejected</button>
+    </div>
+    <table>
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </section>
+
+  <section id="board" class="hidden"><div class="board" id="boardCols"></div></section>
+
+  <section id="portals" class="hidden">
+    <div class="toolbar">
+      <input id="portalSearch" placeholder="Search company, email, username...">
+      <button class="primary" id="addPortalBtn" style="margin-left:auto;white-space:nowrap">+ Add portal</button>
+    </div>
+    <table>
+      <thead><tr><th>Company</th><th>Email ID</th><th>Portal link</th><th>Login type</th><th>Username</th><th>Password</th><th>Notes</th><th></th></tr></thead>
+      <tbody id="portalBody"></tbody>
+    </table>
+  </section>
+</main>
+
+<dialog id="dlgPortal">
+  <form method="dialog" id="pform">
+    <h3 id="pTitle" style="margin:0">Career portal</h3>
+    <label>Company *<input name="company" list="companyList" required></label>
+    <datalist id="companyList"></datalist>
+    <label>Email ID<input type="email" name="emailId"></label>
+    <label>Career portal link<input type="url" name="portalLink" placeholder="https://..."></label>
+    <label class="switch-row"><span>OTP login (no password)</span><span class="switch"><input type="checkbox" name="otp"><span class="slider"></span></span></label>
+    <div class="row">
+      <label>Username<input name="username" autocomplete="off"></label>
+      <label id="passwordRow">Password<input name="password" autocomplete="off"></label>
+    </div>
+    <label>Notes<textarea name="notes" rows="3"></textarea></label>
+    <div class="actions">
+      <button type="button" id="pCancel">Cancel</button>
+      <button type="submit" class="primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h3 id="dlgTitle" style="margin:0">Application</h3>
+    <label>Company *<input name="company" required></label>
+    <label>Role *<input name="role" required></label>
+    <div class="row">
+      <label>Status<select name="status"></select></label>
+      <label>Applied date<input type="date" name="applied"></label>
+    </div>
+    <label>Follow-up date<input type="date" name="followUp"></label>
+    <label>Job link<input type="url" name="link" placeholder="https://..."></label>
+    <label class="switch-row"><span>Referral job</span><span class="switch"><input type="checkbox" name="referral"><span class="slider"></span></span></label>
+    <label id="referredByRow" class="hidden">Referred by<input name="referredBy" placeholder="Name of the person who referred you"></label>
+    <label>Job description<textarea name="description" rows="5" placeholder="Paste the job description here..."></textarea></label>
+    <label>Notes<textarea name="notes" rows="3"></textarea></label>
+    <div class="actions">
+      <button type="button" class="danger" id="delBtn">Delete</button>
+      <button type="button" id="cancelBtn">Cancel</button>
+      <button type="submit" class="primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="xlsx.full.min.js"></script>
+<script>
+const STATUSES = ['Wishlist', 'Applied', 'Interview', 'Offer', 'Rejected'];
+const FIELDS = ['id', 'company', 'role', 'status', 'applied', 'followUp', 'link', 'referral', 'referredBy', 'description', 'notes'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+const capFirst = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+let apps = [];
+let portals = [], portalsLoaded = false, editingPortalId = null;
+const shown = new Set();
+let loaded = false, saveError = '';
+let sortKey = 'applied', sortDir = -1, editingId = null;
+
+// ---------- Excel ----------
+function fromXLSX(buf) {
+  const wb = XLSX.read(buf, { type: 'array' });
+  const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '', raw: false });
+  return rows.map(r => {
+    const norm = {};
+    Object.keys(r).forEach(k => { norm[k.toLowerCase().replace(/[^a-z]/g, '')] = r[k]; });
+    const o = {};
+    FIELDS.forEach(f => o[f] = String(norm[f.toLowerCase()] ?? ''));
+    o.id = o.id || crypto.randomUUID();
+    o.company = capFirst(o.company);
+    if (!STATUSES.includes(o.status)) o.status = 'Applied';
+    return o;
+  }).filter(o => o.company || o.role);
+}
+
+// ---------- persistence ----------
+async function sync(url, data, ready) {
+  if (!ready) { saveError = 'The spreadsheet has not been loaded, so nothing was saved.'; render(); return; }
+  try {
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error);
+    saveError = '';
+  } catch (e) { saveError = e.message; }
+  render();
+}
+const save = () => sync('/api/applications', apps, loaded);
+const savePortals = () => sync('/api/portals', portals, portalsLoaded);
+async function load() {
+  try {
+    const r = await fetch('/api/applications');
+    if (!r.ok) throw new Error((await r.json()).error);
+    apps = await r.json();
+    apps.forEach(a => {
+      a.id = a.id || crypto.randomUUID();
+      if (!STATUSES.includes(a.status)) a.status = 'Applied';
+    });
+    loaded = true;
+    const p = await fetch('/api/portals');
+    if (!p.ok) throw new Error((await p.json()).error);
+    portals = await p.json();
+    portals.forEach(x => { x.id = x.id || crypto.randomUUID(); });
+    portalsLoaded = true;
+  } catch (e) { saveError = e.message; }
+  render();
+}
+
+$('exportBtn').onclick = () => { location.href = '/api/download'; };
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  const ids = new Set(apps.map(a => a.id));
+  apps = apps.concat(fromXLSX(await f.arrayBuffer()).filter(a => !ids.has(a.id)));
+  e.target.value = ''; save();
+};
+
+function renderSaveBar() {
+  const bar = $('saveBar');
+  if (saveError) {
+    bar.className = 'warn';
+    bar.textContent = '⚠ Not saved to job-applications.xlsx: ' + saveError + ' (Start the app with start.bat. If the file is open in Excel, close it and try again.)';
+  } else {
+    bar.className = 'hidden';
+    bar.textContent = '';
+  }
+}
+
+// ---------- helpers ----------
+const today = () => new Date().toISOString().slice(0, 10);
+function followClass(a) {
+  if (!a.followUp || a.status === 'Offer' || a.status === 'Rejected') return '';
+  const d = (new Date(a.followUp) - new Date(today())) / 864e5;
+  if (d < 0) return 'overdue';
+  if (d <= 3) return 'soon';
+  return '';
+}
+function followLabel(a) {
+  const c = followClass(a);
+  if (!a.followUp) return '';
+  return `<span class="${c}">${esc(a.followUp)}${c === 'overdue' ? ' (overdue)' : ''}</span>`;
+}
+
+// ---------- render ----------
+function render() { renderStats(); renderTable(); renderBoard(); renderPortals(); renderSaveBar(); }
+
+function renderStats() {
+  const count = s => apps.filter(a => a.status === s).length;
+  const boxes = [['Total', apps.length], ['Applied', count('Applied')], ['Interviews', count('Interview')], ['Offers', count('Offer')], ['Rejected', count('Rejected')]];
+  $('stats').innerHTML = boxes.map(([l, n], i) => `<div class="stat st${i}"><b>${n}</b>${l}</div>`).join('');
+  const max = Math.max(1, ...STATUSES.map(count));
+  $('chart').innerHTML = STATUSES.map(s =>
+    `<div class="s-${s}" style="display:flex;align-items:center;gap:10px;margin:6px 0"><span style="width:80px">${s}</span>
+     <div class="bar" style="width:${count(s) / max * 70}%;min-width:2px"></div><span>${count(s)}</span></div>`).join('');
+  const due = apps.filter(a => followClass(a)).sort((a, b) => a.followUp.localeCompare(b.followUp));
+  $('reminders').innerHTML = due.length
+    ? due.map(a => `<div style="margin:6px 0"><a href="#" data-edit="${a.id}">${esc(a.company)} - ${esc(a.role)}</a> ${followLabel(a)}</div>`).join('')
+    : '<span style="color:var(--muted)">Nothing due in the next 3 days.</span>';
+}
+
+function renderTable() {
+  const cols = [['company', 'Company'], ['role', 'Role'], ['status', 'Status'], ['applied', 'Applied'], ['followUp', 'Follow-up'], ['referredBy', 'Referred by'], ['description', 'Job description'], ['notes', 'Notes']];
+  $('thead').innerHTML = cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('') + '<th></th>';
+  const q = $('search').value.toLowerCase(), sf = $('statusFilter').value, rf = $('referralFilter').value;
+  const rows = apps
+    .filter(a => (!sf || a.status === sf) && (!rf || (rf === 'yes') === (a.referral === 'Yes')) && (!q || [a.company, a.role, a.referredBy, a.description, a.notes].join(' ').toLowerCase().includes(q)))
+    .sort((a, b) => String(a[sortKey] ?? '').localeCompare(String(b[sortKey] ?? '')) * sortDir);
+  $('tbody').innerHTML = rows.length ? rows.map(a => `<tr>
+    <td>${a.link ? `<a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.company)}</a>` : esc(a.company)}</td>
+    <td>${esc(a.role)}</td><td><span class="badge s-${esc(a.status)}">${esc(a.status)}</span></td>
+    <td>${esc(a.applied)}</td><td>${followLabel(a)}</td><td>${esc(a.referredBy)}</td>
+    <td class="clip" title="${esc(a.description)}">${esc(a.description)}</td><td>${esc(a.notes)}</td>
+    <td style="white-space:nowrap"><button data-edit="${a.id}">Edit</button> <button class="danger" data-del="${a.id}">Delete</button></td></tr>`).join('')
+    : '<tr><td colspan="9" style="color:var(--muted)">No applications yet.</td></tr>';
+}
+
+function renderBoard() {
+  $('boardCols').innerHTML = STATUSES.map(s => `<div class="col s-${s}" data-status="${s}"><h3>${s} (${apps.filter(a => a.status === s).length})</h3>
+    ${apps.filter(a => a.status === s).map(a => `<div class="card s-${s}" draggable="true" data-id="${a.id}" data-edit="${a.id}">
+      <b>${esc(a.company)}</b><small>${esc(a.role)}</small>${a.followUp ? `<small>Follow-up: ${followLabel(a)}</small>` : ''}</div>`).join('')}
+  </div>`).join('');
+}
+
+// ---------- events ----------
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('nav button').forEach(x => x.classList.toggle('active', x === b));
+  ['dashboard', 'table', 'board', 'portals'].forEach(v => $(v).classList.toggle('hidden', v !== b.dataset.view));
+});
+$('search').oninput = renderTable;
+$('statusFilter').onchange = renderTable;
+$('referralFilter').onchange = renderTable;
+$('thead').onclick = e => {
+  const k = e.target.dataset.sort; if (!k) return;
+  sortDir = sortKey === k ? -sortDir : 1; sortKey = k; renderTable();
+};
+$('clearRejected').onclick = () => {
+  const n = apps.filter(a => a.status === 'Rejected').length;
+  if (!n) { alert('There are no rejected applications.'); return; }
+  if (confirm('Delete all ' + n + ' rejected applications? This cannot be undone.')) {
+    apps = apps.filter(a => a.status !== 'Rejected');
+    save();
+  }
+};
+$('tbody').addEventListener('click', e => {
+  const id = e.target.dataset.del;
+  if (id && confirm('Delete this application?')) { apps = apps.filter(a => a.id !== id); save(); }
+});
+document.body.addEventListener('click', e => {
+  const t = e.target.closest('[data-edit]');
+  if (t) { e.preventDefault(); openForm(t.dataset.edit); }
+});
+
+const board = $('boardCols');
+board.addEventListener('dragstart', e => { const c = e.target.closest('.card'); if (c) e.dataTransfer.setData('text/plain', c.dataset.id); });
+board.addEventListener('dragover', e => { const c = e.target.closest('.col'); if (c) { e.preventDefault(); c.classList.add('over'); } });
+board.addEventListener('dragleave', e => { const c = e.target.closest('.col'); if (c) c.classList.remove('over'); });
+board.addEventListener('drop', e => {
+  const c = e.target.closest('.col'); if (!c) return;
+  e.preventDefault();
+  const a = apps.find(x => x.id === e.dataTransfer.getData('text/plain'));
+  if (a && a.status !== c.dataset.status) { a.status = c.dataset.status; save(); } else render();
+});
+
+// ---------- form ----------
+const form = $('form');
+function syncAppliedDate() {
+  const wishlist = form.elements.status.value === 'Wishlist';
+  if (wishlist) form.elements.applied.value = '';
+  else if (!form.elements.applied.value) form.elements.applied.value = today();
+  form.elements.applied.disabled = wishlist;
+}
+form.elements.status.onchange = syncAppliedDate;
+form.elements.referral.onchange = () => $('referredByRow').classList.toggle('hidden', !form.elements.referral.checked);
+function openForm(id) {
+  editingId = id || null;
+  const a = apps.find(x => x.id === id) || { status: 'Applied', applied: today() };
+  $('dlgTitle').textContent = id ? 'Edit application' : 'Add application';
+  $('delBtn').classList.toggle('hidden', !id);
+  ['company', 'role', 'status', 'applied', 'followUp', 'link', 'referredBy', 'description', 'notes'].forEach(f => form.elements[f].value = a[f] ?? '');
+  form.elements.referral.checked = a.referral === 'Yes';
+  $('referredByRow').classList.toggle('hidden', !form.elements.referral.checked);
+  form.elements.applied.disabled = a.status === 'Wishlist';
+  $('dlg').showModal();
+}
+$('addBtn').onclick = () => openForm();
+$('cancelBtn').onclick = () => $('dlg').close();
+$('delBtn').onclick = () => {
+  if (confirm('Delete this application?')) { apps = apps.filter(a => a.id !== editingId); $('dlg').close(); save(); }
+};
+form.onsubmit = () => {
+  const data = {};
+  ['company', 'role', 'status', 'applied', 'followUp', 'link', 'referredBy', 'description', 'notes'].forEach(f => data[f] = form.elements[f].value.trim());
+  data.company = capFirst(data.company);
+  if (data.status === 'Wishlist') data.applied = '';
+  data.referral = form.elements.referral.checked ? 'Yes' : '';
+  if (!data.referral) data.referredBy = '';
+  const existing = apps.find(a => a.id === editingId);
+  if (existing) Object.assign(existing, data);
+  else apps.push({ id: crypto.randomUUID(), ...data });
+  save();
+};
+
+// ---------- portals ----------
+const pform = $('pform');
+pform.elements.otp.onchange = () => $('passwordRow').classList.toggle('hidden', pform.elements.otp.checked);
+function renderPortals() {
+  const q = $('portalSearch').value.toLowerCase();
+  const rows = portals
+    .filter(p => !q || [p.company, p.emailId, p.username, p.notes].join(' ').toLowerCase().includes(q))
+    .sort((a, b) => a.company.localeCompare(b.company));
+  $('portalBody').innerHTML = rows.length ? rows.map(p => `<tr>
+    <td>${esc(p.company)}</td><td>${esc(p.emailId)}</td>
+    <td class="clip">${p.portalLink ? `<a href="${esc(p.portalLink)}" target="_blank" rel="noopener">${esc(p.portalLink)}</a>` : ''}</td>
+    <td>${p.loginType === 'OTP' ? '<span class="badge" style="--c:#8b5cf6">OTP</span>' : '<span class="badge" style="--c:#64748b">Password</span>'}</td>
+    <td>${esc(p.username)}</td>
+    <td>${p.loginType === 'OTP' ? '<span style="color:var(--muted)">No password</span>' : `<span data-reveal="${p.id}" style="cursor:pointer" title="Click to show or hide">${shown.has(p.id) ? esc(p.password) : (p.password ? '••••••' : '')}</span>`}</td>
+    <td>${esc(p.notes)}</td>
+    <td style="white-space:nowrap"><button data-pedit="${p.id}">Edit</button> <button class="danger" data-pdel="${p.id}">Delete</button></td></tr>`).join('')
+    : '<tr><td colspan="8" style="color:var(--muted)">No portals saved yet.</td></tr>';
+}
+function openPortalForm(id) {
+  editingPortalId = id || null;
+  const p = portals.find(x => x.id === id) || {};
+  $('pTitle').textContent = id ? 'Edit career portal' : 'Add career portal';
+  ['company', 'emailId', 'portalLink', 'username', 'password', 'notes'].forEach(f => pform.elements[f].value = p[f] ?? '');
+  pform.elements.otp.checked = p.loginType === 'OTP';
+  $('passwordRow').classList.toggle('hidden', pform.elements.otp.checked);
+  $('companyList').innerHTML = [...new Set(apps.map(a => a.company))].map(c => `<option value="${esc(c)}">`).join('');
+  $('dlgPortal').showModal();
+}
+$('addPortalBtn').onclick = () => openPortalForm();
+$('pCancel').onclick = () => $('dlgPortal').close();
+$('portalSearch').oninput = renderPortals;
+$('portalBody').addEventListener('click', e => {
+  const d = e.target.dataset;
+  if (d.reveal) { shown.has(d.reveal) ? shown.delete(d.reveal) : shown.add(d.reveal); renderPortals(); }
+  else if (d.pedit) openPortalForm(d.pedit);
+  else if (d.pdel && confirm('Delete this portal entry?')) { portals = portals.filter(p => p.id !== d.pdel); savePortals(); }
+});
+pform.onsubmit = e => {
+  e.preventDefault();
+  const data = {};
+  ['company', 'emailId', 'portalLink', 'username', 'password', 'notes'].forEach(f => data[f] = pform.elements[f].value.trim());
+  data.company = capFirst(data.company);
+  data.loginType = pform.elements.otp.checked ? 'OTP' : 'Password';
+  if (data.loginType === 'OTP') data.password = '';
+  const dup = portals.find(p => p.company.toLowerCase() === data.company.toLowerCase() && p.id !== editingPortalId);
+  if (dup) { alert('A portal for ' + dup.company + ' already exists. Edit that one instead.'); return; }
+  const existing = portals.find(p => p.id === editingPortalId);
+  if (existing) Object.assign(existing, data);
+  else portals.push({ id: crypto.randomUUID(), ...data });
+  $('dlgPortal').close();
+  savePortals();
+};
+
+$('statusFilter').innerHTML = '<option value="">All statuses</option>' + STATUSES.map(s => `<option>${s}</option>`).join('');
+form.elements.status.innerHTML = STATUSES.map(s => `<option>${s}</option>`).join('');
+render();
+load();
+</script>
+</body>
+</html>
